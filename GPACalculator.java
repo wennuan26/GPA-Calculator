@@ -64,7 +64,7 @@ public class GPACalculator extends JFrame {
 
     private void connectDB() {
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gpa_app", "root", "yourpassword");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gpa_app", "root", "@wennuan_26");
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Database connection failed!");
             e.printStackTrace();
@@ -193,24 +193,35 @@ public class GPACalculator extends JFrame {
             stylizeField(creditField);
             stylizeComboBox(gradeBox);
 
-            gradeBox.addActionListener(e -> {
-                // Auto-fill typical credit (e.g., 3.0) for simplicity
-                if (creditField.getText().isEmpty()) {
-                    creditField.setText("3.0");
-                }
-            });
-
             JLabel subLbl = new JLabel("Subject:");
             JLabel credLbl = new JLabel("Credits:");
             JLabel gradLbl = new JLabel("Grade:");
-
             subLbl.setForeground(Color.WHITE);
             credLbl.setForeground(Color.WHITE);
             gradLbl.setForeground(Color.WHITE);
 
-            add(subLbl); add(subjectField);
-            add(credLbl); add(creditField);
-            add(gradLbl); add(gradeBox);
+            gradeBox.addActionListener(e -> {
+                String selectedGrade = gradeBox.getSelectedItem().toString();
+                float point = getGradePoint(selectedGrade);
+
+                if (creditField.getText().isEmpty() || isDefaultCredit(creditField.getText())) {
+                    if (point >= 3.7) creditField.setText("4.0");
+                    else if (point >= 3.0) creditField.setText("3.0");
+                    else if (point >= 2.0) creditField.setText("2.0");
+                    else creditField.setText("1.0");
+                }
+            });
+
+            add(subLbl);
+            add(subjectField);
+            add(credLbl);
+            add(creditField);
+            add(gradLbl);
+            add(gradeBox);
+        }
+
+        private boolean isDefaultCredit(String text) {
+            return text.equals("4.0") || text.equals("3.0") || text.equals("2.0") || text.equals("1.0");
         }
 
         private void stylizeField(JTextField field) {
@@ -224,7 +235,33 @@ public class GPACalculator extends JFrame {
         private void stylizeComboBox(JComboBox<String> comboBox) {
             comboBox.setBackground(new Color(60, 60, 60));
             comboBox.setForeground(Color.WHITE);
-            comboBox.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            comboBox.setFont(new Font("SansSerif", Font.BOLD, 14));
+            comboBox.setRenderer(new DefaultListCellRenderer() {
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                              boolean isSelected, boolean cellHasFocus) {
+                    JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    label.setBackground(new Color(60, 60, 60));
+                    label.setForeground(Color.WHITE);
+                    label.setFont(new Font("SansSerif", Font.BOLD, 14));
+                    return label;
+                }
+            });
+        }
+
+        private float getGradePoint(String grade) {
+            return switch (grade.toUpperCase()) {
+                case "A+", "A" -> 4.0f;
+                case "A-" -> 3.7f;
+                case "B+" -> 3.3f;
+                case "B" -> 3.0f;
+                case "B-" -> 2.7f;
+                case "C+" -> 2.3f;
+                case "C" -> 2.0f;
+                case "C-" -> 1.7f;
+                case "D" -> 1.0f;
+                case "F" -> 0.0f;
+                default -> 0.0f;
+            };
         }
     }
 
